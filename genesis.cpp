@@ -1,134 +1,116 @@
-#include <bits/stdc++>
-static auto_increament_id =1; // this value is auto increament just like a unique identifier in sql or any other language
-static auto_node_no=1;
-class single_node_data
-{
-public :
-	int own_id; // this 
-	double value;
-	string name;
-	string hash;
+#include<bits/stdc++.h>
+using namespace std;
 
-
-	single_node_data();
-	single_node_data(double value , string name)
-	{
-		this->own_id = auto_increament_id;
-		auto_increament_id++;
-		this->name = name;
-		this->value = value;
-		this->hash ="";
-
-
-	}
-	void create_hash()
-	{
-		this->hash = to_string(this->own_id)+'#'+name+'#'+to_string(this->value)+'@'; // creating a self hash function to convert the data in hash form
-
-	}
-	string get_hash()
-	{
-		return this->hash;
-	}
-
-};
-class single_node
-{
-public :
-	string timestamp;
-	single_node_data data;
-	static int nodeNummber;
-	string nodeId , refernce_node;
-	vector <string> child_ref_node_id;
-	string gen_ref_node;
-	string hash_value ;
-	string my_secret;
-
-
-	single_node();
-	single_node( single_node_data data , string nodeId , string refernce_node , string child_ref_node_id, string gen_ref_node)
-	{
-		time_t now = time(0);
-		this->timestamp = ctime(&now);
-		this->data = data;
-		this->nodeNummber = auto_node_no;
-		auto_node_no++;
-		this->nodeId = nodeId;
-		this->refernce_node = refernce_node ;
-		this->child_ref_node_id.push_back(child_ref_node_id);
-		this->gen_ref_node = gen_ref_node;
-
-
-		
-	}
-	void create_hash()
-	{
-		this->hash_value = this->timestamp+'#'+(this->data).get_hash()+'#'+to_string(nodeNummber)+'#'+this->nodeId+'#'+this->refernce_node+'#'+this.gen_ref_node+'@';
-	}
-
-
-	single_node_data get_data(string my_secret)
-	{
-		if(this->my_secret == my_secret)
-		{
-			return this->data;
-		}
-		single_node_data = data();
-
-		return dat;
-	}
-
-
-};
-
-
-class genesis
-{
-	map<string , single_node> tree;
-
+class Node{
 public:
-	genesis();
-
-	void insert_node(string child_ref_node_id)
-	{
-		int parent_value = -1;
-		single_node parent;
-		int flag=0;
-		if(tree.find(refernce_node_id)!=tree.end())
-		{
-			parent = tree[refernce_node_id];
-			flag =1;
-		}
-		if(flag)
-		{
-			vector<string> children = parent.child_ref_node_id;
-			int cur_sum =0;
-			for(auto it= children.begin();it!=children.end();++it)
-			{
-				cur_sum+=tree[*it].data.value;
-			}
-
-		}
-		int possible_ans = parent.data.value;
-		possible_ans = possible_ans - cur_sum;
-		if(possible_ans)
-		{
-			
-		}
-
-
-
-	}
-
-
-
-
-
-	~genesis();
-	
+    int nodeNumber;        //Node Number
+    int data;            //Data
+    string nodeId;        //Node Id equals Node Number but stored in string form
+    Node* refNodeId;        //parent Node Id address
+    vector<Node*> childRef;        //Child Node Ids address
+    Node* genNodeId;        //Genesis Node Id address
+    
+    /** Constructor to initialize Node**/
+    Node(int nnum,int d,Node* ref,Node* gen){
+        nodeNumber = nnum;
+        data = d;
+        nodeId = to_string(nodeNumber);
+        refNodeId = ref;
+        genNodeId = gen;
+    }
+    
+    /**Function to return Sum of data of all child **/
+    int getSumChild(){
+        int val = 0;
+        for(auto i = childRef.begin();i!=childRef.end();i++){
+            val += (*i)->data;
+        }
+        return val;
+    }
 };
-int main()
-{
 
-	return 0;
+/** Provide value of longest chain possible **/
+int longestChain(Node* p){
+    if(p == NULL){
+        return 0;
+    }
+    if(p->childRef.size() == 0){
+        return 1;
+    }
+    int longest= INT_MIN;
+    for(auto i = p->childRef.begin();i!=p->childRef.end();i++){
+        longest = max(longest,longestChain(*i));
+    }
+    return longest + 1;
+}
+
+/** Adds Node to given Parent Node **/
+bool addNode(int data,Node* p,int nnum,Node* gen){
+    Node* r;
+    if(data + p->getSumChild() < p->data){
+        r = new Node(nnum,data,p,gen);
+        p->childRef.push_back(r);
+        return true;
+    }
+    for(auto i = p->childRef.begin();i!=p->childRef.end();i++){
+        bool flag = addNode(data,*i,nnum,gen);
+        if(flag){
+            return true;
+        }
+    }
+    return false;
+}
+
+/** Adds Node to certain Node and return false if not possible **/
+bool addToCertainNode(int data,Node* p,int nnum,Node* gen){
+    Node* r;
+    if(data + p->getSumChild() < p->data){
+        r = new Node(nnum,data,p,gen);
+        p->childRef.push_back(r);
+        return true;
+    }
+    return false;
+}
+
+
+void mergeNode(Node* n1,Node* n2){
+    if(longestChain(n1) > longestChain(n2)){
+        n1->data += n2->data;
+        delete n2;
+        return ;
+    }
+    n1->data += n2->data;
+    delete n2;
+}
+
+int main(){
+    int nnum = 0;
+    int data;
+    cout<<"Enter Data: ";
+    cin>>data;
+    Node gen(++nnum,data,NULL,NULL);
+    int values;
+    cin>>values;
+    while(values != 0);
+	{
+        cout<<"Options Possible :"<<'\n';
+        cout<<"1 : Add Node to genesis node or down"<<'\n';
+        cout<<"2 : Merge Two Nodes by giving data."<<'\n';
+        cout<<"3 : Add Node to certain Node by providing address of it."<<'\n';
+        cout<<"4 : Find longest chain of genesis node."<<'\n';
+        cout<<"5 : Find longest chain of Node by providing address of it."<<'\n';
+        cout<<"6 : Exit"<<'\n';
+        cout<<"Enter value : ";
+        cin>>values;
+        switch(values){
+            case 1: 
+                cout<<"Enter data : ";
+                cin>>data;
+                bool add = addNode(data,&gen,++nnum,&gen);
+                add ? cout<<"Add Successful"<<'\n' : cout<<"Add Not Possible"<<'\n';
+                break;
+            
+        } 
+    }
+    return 0;
 }
